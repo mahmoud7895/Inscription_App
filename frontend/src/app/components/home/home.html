@@ -1,0 +1,36 @@
+<div class="home-wrapper">
+  <div class="header">
+    <h1>Bienvenue, {{ user?.prenom || 'Utilisateur' }} ! 👋</h1>
+    <button (click)="logout()" class="logout-btn">Déconnexion</button>
+  </div>
+
+  <div class="info-card">
+    <h3>Mes Informations Personnelles</h3>
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Champ</th>
+          <th>Valeur</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Nom</strong></td>
+          <td>{{ user?.nom }}</td>
+        </tr>
+        <tr>
+          <td><strong>Prénom</strong></td>
+          <td>{{ user?.prenom }}</td>
+        </tr>
+        <tr>
+          <td><strong>Âge</strong></td>
+          <td>{{ user?.age }} ans</td>
+        </tr>
+        <tr>
+          <td><strong>Email</strong></td>
+          <td>{{ user?.email }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,102 @@
+/* Global */
+.home-wrapper {
+  min-height: 100vh;
+  padding: 40px;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.header h1 {
+  font-size: 26px;
+}
+
+/* Bouton déconnexion */
+.logout-btn {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #f2f2f2;
+  transform: scale(1.05);
+}
+
+/* Carte info */
+.info-card {
+  background: white;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+/* Titre carte */
+.info-card h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Tableau */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* En-tête tableau */
+.styled-table th {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 15px;
+  text-align: left;
+}
+
+/* Cellules */
+.styled-table td {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  color: #444;
+}
+
+/* Ligne hover */
+.styled-table tbody tr:hover {
+  background: #f6f7ff;
+}
+
+/* Badges (si utilisés plus tard) */
+.status {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.verified {
+  background: #e6e9ff;
+  color: #667eea;
+}
+
+.active {
+  background: #ede7f6;
+  color: #764ba2;
+}
+
+.encrypted {
+  background: #f4f4f4;
+  color: #555;
+}
