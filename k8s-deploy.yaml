@@ -1,3 +1,45 @@
+# -------------------------------------------------------------------
+# 1. DATABASE: PostgreSQL
+# -------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: inscription_db
+        - name: POSTGRES_USER
+          value: user
+        - name: POSTGRES_PASSWORD
+          value: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+---
+# -------------------------------------------------------------------
+# 2. BACKEND: Spring Boot
+# -------------------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,17 +59,29 @@ spec:
         image: mahmoudfalfel/inscription-backend:v1
         ports:
         - containerPort: 8080
+        env:
+        # Ces variables doivent correspondre à ton application.properties
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres:5432/inscription_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: user
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: password
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-service
+  name: backend  # <--- TRÈS IMPORTANT: doit s'appeler 'backend' pour Nginx
 spec:
   selector:
     app: backend
   ports:
     - port: 8080
+      targetPort: 8080
 ---
+# -------------------------------------------------------------------
+# 3. FRONTEND: Angular + Nginx
+# -------------------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,4 +113,4 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30001 # Ton app sera accessible sur http://IP-VM1:30001
+      nodePort: 30001
