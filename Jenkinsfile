@@ -1,41 +1,52 @@
 pipeline {
-    agent { label 'Agent-VM2' } // Utilise ton agent VM2 pour le build (plus de RAM)
+    agent { label 'Agent-VM2' }
+
+    tools {
+        maven 'Maven-3.9'
+    }
 
     environment {
-        // Chemin vers ton fichier de config K3s que tu as préparé
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
+        BACKEND_IMAGE = 'mahmoudfalfel/inscription-backend:v1'
+        FRONTEND_IMAGE = 'mahmoudfalfel/inscription-frontend:v1'
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                // Jenkins télécharge ton code depuis GitHub
                 checkout scm
             }
         }
 
-        stage('Build & Push Backend') {
+        stage('Build Backend (Maven)') {
             steps {
                 dir('backend') {
-                    sh 'docker build -t mahmoudfalfel/inscription-backend:v1 .'
-                    // Note: Il faut être connecté à Docker Hub sur l'agent
-                    sh 'docker push mahmoudfalfel/inscription-backend:v1'
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
 
-        stage('Build & Push Frontend') {
+        stage('Build & Push Backend Docker') {
+            steps {
+                dir('backend') {
+                    sh 'docker build -t $BACKEND_IMAGE .'
+                    sh 'docker push $BACKEND_IMAGE'
+                }
+            }
+        }
+
+        stage('Build & Push Frontend Docker') {
             steps {
                 dir('frontend') {
-                    sh 'docker build -t mahmoudfalfel/inscription-frontend:v1 .'
-                    sh 'docker push mahmoudfalfel/inscription-frontend:v1'
+                    sh 'docker build -t $FRONTEND_IMAGE .'
+                    sh 'docker push $FRONTEND_IMAGE'
                 }
             }
         }
 
         stage('Deploy to K3s') {
             steps {
-                // On applique le fichier de déploiement sur le cluster K3s (VM1)
                 sh 'kubectl apply -f k8s-deploy.yaml'
             }
         }
