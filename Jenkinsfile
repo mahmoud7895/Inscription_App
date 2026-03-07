@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        KUBECONFIG = '/var/lib/jenkins/.kube/config'
+        KUBECONFIG = '/home/mahmoud/.kube/config'
         BACKEND_IMAGE = 'mahmoudfalfel/inscription-backend:v1'
         FRONTEND_IMAGE = 'mahmoudfalfel/inscription-frontend:v1'
     }
