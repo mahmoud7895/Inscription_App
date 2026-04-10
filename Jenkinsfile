@@ -1,13 +1,13 @@
 pipeline {
-    agent { label 'Agent-VM2' }
+    agent any
 
     tools {
         maven 'Maven-3.9'
     }
 
     environment {
-        KUBECONFIG = '/home/mahmoud/.kube/config'
-        BACKEND_IMAGE = 'mahmoudfalfel/inscription-backend:v1'
+        KUBECONFIG = '/etc/rancher/k3s/k3s.yaml'
+        BACKEND_IMAGE  = 'mahmoudfalfel/inscription-backend:v1'
         FRONTEND_IMAGE = 'mahmoudfalfel/inscription-frontend:v1'
     }
 
@@ -29,9 +29,16 @@ pipeline {
 
         stage('Build & Push Backend Docker') {
             steps {
-                dir('backend') {
-                    sh 'docker build -t $BACKEND_IMAGE .'
-                    sh 'docker push $BACKEND_IMAGE'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    dir('backend') {
+                        sh 'docker build -t $BACKEND_IMAGE .'
+                        sh 'docker push $BACKEND_IMAGE'
+                    }
                 }
             }
         }
@@ -50,5 +57,11 @@ pipeline {
                 sh 'kubectl apply -f k8s-deploy.yaml'
             }
         }
+    }
+
+    post {
+        success { echo '✅ Déploiement réussi !' }
+        failure { echo '❌ Pipeline échoué - vérifier les logs' }
+        always  { sh 'docker logout || true' }
     }
 }
