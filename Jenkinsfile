@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        KUBECONFIG = '/etc/rancher/k3s/k3s.yaml'
+        KUBECONFIG     = '/etc/rancher/k3s/k3s.yaml'
         BACKEND_IMAGE  = 'mahmoudfalfel/inscription-backend:v1'
         FRONTEND_IMAGE = 'mahmoudfalfel/inscription-frontend:v1'
     }
@@ -15,7 +15,9 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'master',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/mahmoud7895/Inscription_App.git'
             }
         }
 
@@ -45,9 +47,15 @@ pipeline {
 
         stage('Build & Push Frontend Docker') {
             steps {
-                dir('frontend') {
-                    sh 'docker build -t $FRONTEND_IMAGE .'
-                    sh 'docker push $FRONTEND_IMAGE'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    dir('frontend') {
+                        sh 'docker build -t $FRONTEND_IMAGE .'
+                        sh 'docker push $FRONTEND_IMAGE'
+                    }
                 }
             }
         }
