@@ -5,7 +5,7 @@ pipeline {
         KUBECONFIG      = '/etc/rancher/k3s/k3s.yaml'
         BACKEND_IMAGE   = 'mahmoudfalfel/inscription-backend:v1'
         FRONTEND_IMAGE  = 'mahmoudfalfel/inscription-frontend:v1'
-        SONAR_URL       = 'http://localhost:9000'
+        SONAR_URL       = 'http://192.168.42.133:9000'
     }
     stages {
         stage('Clone') {
@@ -39,7 +39,7 @@ pipeline {
         }
         stage('Quality Gate') {
             steps {
-                timeout(time: 15, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
