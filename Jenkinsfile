@@ -30,6 +30,9 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+                // Stopper Nexus pour libérer de la RAM
+                sh 'docker stop nexus || true'
+                sh 'sleep 5'
                 withSonarQubeEnv('SonarQube') {
                     dir('backend') {
                         sh '''
@@ -54,6 +57,9 @@ pipeline {
 
         stage('Build & Push → Nexus') {
             steps {
+                // Redémarrer Nexus pour le push
+                sh 'docker start nexus'
+                sh 'sleep 60'
                 withCredentials([usernamePassword(
                     credentialsId: 'nexus-credentials',
                     usernameVariable: 'NEXUS_USER',
@@ -84,6 +90,9 @@ pipeline {
     post {
         success { echo '🎉 Pipeline réussi — Images dans Nexus !' }
         failure { echo '❌ Pipeline échoué' }
-        always  { sh 'docker logout $NEXUS_URL || true' }
+        always  {
+            sh 'docker logout $NEXUS_URL || true'
+            sh 'docker start nexus || true'
+        }
     }
 }
