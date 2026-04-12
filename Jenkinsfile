@@ -30,7 +30,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // Stopper Nexus pour libérer de la RAM
                 sh 'docker stop nexus || true'
                 sh 'sleep 5'
                 withSonarQubeEnv('SonarQube') {
@@ -57,9 +56,20 @@ pipeline {
 
         stage('Build & Push → Nexus') {
             steps {
-                // Redémarrer Nexus pour le push
                 sh 'docker start nexus'
-                sh 'sleep 60'
+                // Attendre que Nexus soit vraiment prêt
+                sh '''
+                    echo "Attente démarrage Nexus..."
+                    for i in $(seq 1 30); do
+                        STATUS=$(curl -s http://192.168.42.133:8081/service/rest/v1/status 2>/dev/null | grep -o "available" || echo "")
+                        if [ "$STATUS" = "available" ]; then
+                            echo "Nexus est prêt !"
+                            break
+                        fi
+                        echo "Tentative $i/30 — Nexus pas encore prêt..."
+                        sleep 10
+                    done
+                '''
                 withCredentials([usernamePassword(
                     credentialsId: 'nexus-credentials',
                     usernameVariable: 'NEXUS_USER',
