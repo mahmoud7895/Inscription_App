@@ -1,7 +1,6 @@
 pipeline {
     agent any
     tools { maven 'Maven-3.9' }
-
     environment {
         KUBECONFIG      = '/etc/rancher/k3s/k3s.yaml'
         NEXUS_URL       = '192.168.42.133:8082'
@@ -9,9 +8,7 @@ pipeline {
         FRONTEND_IMAGE  = '192.168.42.133:8082/inscription-frontend'
         SONAR_URL       = 'http://192.168.42.133:9000'
     }
-
     stages {
-
         stage('Clone') {
             steps {
                 git branch: 'master',
@@ -19,7 +16,6 @@ pipeline {
                     url: 'https://github.com/mahmoud7895/Inscription_App.git'
             }
         }
-
         stage('Build Backend') {
             steps {
                 dir('backend') {
@@ -27,7 +23,6 @@ pipeline {
                 }
             }
         }
-
         stage('SonarQube Analysis') {
             steps {
                 sh 'docker stop nexus || true'
@@ -45,7 +40,6 @@ pipeline {
                 }
             }
         }
-
         stage('Quality Gate') {
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
@@ -53,20 +47,19 @@ pipeline {
                 }
             }
         }
-
         stage('Build & Push → Nexus') {
             steps {
                 sh 'docker start nexus'
-                // Attendre spécifiquement le port 8082 (Docker registry)
+                // Attendre que docker login fonctionne réellement
                 sh '''
-                    echo "Attente port 8082 Nexus Docker registry..."
-                    for i in $(seq 1 40); do
-                        if nc -z 192.168.42.133 8082 2>/dev/null; then
-                            echo "Port 8082 ouvert ! Attente 10s supplémentaires..."
-                            sleep 10
+                    echo "Attente que Nexus Docker registry soit prêt..."
+                    for i in $(seq 1 50); do
+                        RESULT=$(echo "admin123" | docker login 192.168.42.133:8082 -u admin --password-stdin 2>&1)
+                        if echo "$RESULT" | grep -q "Login Succeeded"; then
+                            echo "Nexus Docker login OK !"
                             break
                         fi
-                        echo "Tentative $i/40 — port 8082 pas encore ouvert..."
+                        echo "Tentative $i/50 — $RESULT"
                         sleep 10
                     done
                 '''
@@ -87,7 +80,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy to K3s') {
             steps {
                 sh 'kubectl apply -f k8s-deploy.yaml'
@@ -96,7 +88,6 @@ pipeline {
             }
         }
     }
-
     post {
         success { echo '🎉 Pipeline réussi — Images dans Nexus !' }
         failure { echo '❌ Pipeline échoué' }
