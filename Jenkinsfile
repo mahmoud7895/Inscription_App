@@ -57,16 +57,16 @@ pipeline {
         stage('Build & Push → Nexus') {
             steps {
                 sh 'docker start nexus'
-                // Attendre que Nexus soit vraiment prêt
+                // Attendre spécifiquement le port 8082 (Docker registry)
                 sh '''
-                    echo "Attente démarrage Nexus..."
-                    for i in $(seq 1 30); do
-                        STATUS=$(curl -s http://192.168.42.133:8081/service/rest/v1/status 2>/dev/null | grep -o "available" || echo "")
-                        if [ "$STATUS" = "available" ]; then
-                            echo "Nexus est prêt !"
+                    echo "Attente port 8082 Nexus Docker registry..."
+                    for i in $(seq 1 40); do
+                        if nc -z 192.168.42.133 8082 2>/dev/null; then
+                            echo "Port 8082 ouvert ! Attente 10s supplémentaires..."
+                            sleep 10
                             break
                         fi
-                        echo "Tentative $i/30 — Nexus pas encore prêt..."
+                        echo "Tentative $i/40 — port 8082 pas encore ouvert..."
                         sleep 10
                     done
                 '''
