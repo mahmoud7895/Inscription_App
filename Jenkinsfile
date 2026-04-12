@@ -1,13 +1,17 @@
 pipeline {
     agent any
     tools { maven 'Maven-3.9' }
+
     environment {
         KUBECONFIG      = '/etc/rancher/k3s/k3s.yaml'
-        BACKEND_IMAGE   = 'mahmoudfalfel/inscription-backend:v1'
-        FRONTEND_IMAGE  = 'mahmoudfalfel/inscription-frontend:v1'
+        NEXUS_URL       = '192.168.42.133:8082'
+        BACKEND_IMAGE   = '192.168.42.133:8082/inscription-backend'
+        FRONTEND_IMAGE  = '192.168.42.133:8082/inscription-frontend'
         SONAR_URL       = 'http://192.168.42.133:9000'
     }
+
     stages {
+
         stage('Clone') {
             steps {
                 git branch: 'master',
@@ -15,6 +19,7 @@ pipeline {
                     url: 'https://github.com/mahmoud7895/Inscription_App.git'
             }
         }
+
         stage('Build Backend') {
             steps {
                 dir('backend') {
@@ -22,6 +27,7 @@ pipeline {
                 }
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
@@ -37,6 +43,7 @@ pipeline {
                 }
             }
         }
+
         stage('Quality Gate') {
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
@@ -44,25 +51,27 @@ pipeline {
                 }
             }
         }
-        stage('Build & Push Docker') {
+
+        stage('Build & Push → Nexus') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
+                    credentialsId: 'nexus-credentials',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
                 )]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'echo $NEXUS_PASS | docker login $NEXUS_URL -u $NEXUS_USER --password-stdin'
                     dir('backend') {
-                        sh 'docker build -t $BACKEND_IMAGE .'
-                        sh 'docker push $BACKEND_IMAGE'
+                        sh 'docker build -t $BACKEND_IMAGE:v1 .'
+                        sh 'docker push $BACKEND_IMAGE:v1'
                     }
                     dir('frontend') {
-                        sh 'docker build -t $FRONTEND_IMAGE .'
-                        sh 'docker push $FRONTEND_IMAGE'
+                        sh 'docker build -t $FRONTEND_IMAGE:v1 .'
+                        sh 'docker push $FRONTEND_IMAGE:v1'
                     }
                 }
             }
         }
+
         stage('Deploy to K3s') {
             steps {
                 sh 'kubectl apply -f k8s-deploy.yaml'
@@ -71,9 +80,10 @@ pipeline {
             }
         }
     }
+
     post {
-        success { echo '🎉 Pipeline réussi !' }
+        success { echo '🎉 Pipeline réussi — Images dans Nexus !' }
         failure { echo '❌ Pipeline échoué' }
-        always  { sh 'docker logout || true' }
+        always  { sh 'docker logout $NEXUS_URL || true' }
     }
 }
